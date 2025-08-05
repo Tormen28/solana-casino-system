@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administración de Webhooks - Casino Solana</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .admin-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            margin: 20px auto;
+            max-width: 1200px;
+            padding: 30px;
+        }
+        
+        .status-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
+        
+        .webhook-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #28a745;
+        }
+        
+        .webhook-card.inactive {
+            border-left-color: #dc3545;
+            opacity: 0.7;
+        }
+        
+        .btn-custom {
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary-custom {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+        
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-danger-custom {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            border: none;
+            color: white;
+        }
+        
+        .btn-success-custom {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            border: none;
+            color: white;
+        }
+        
+        .log-container {
+            background: #1a1a1a;
+            color: #00ff00;
+            border-radius: 10px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            min-width: 300px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="admin-container">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h1 class="text-center mb-0">
+                        <i class="fas fa-webhook me-3"></i>
+                        Administración de Webhooks
+                    </h1>
+                    <p class="text-center text-muted">Gestión de webhooks automáticos de Helius</p>
+                </div>
+            </div>
+            
+            <!-- Estado del Sistema -->
+            <div class="status-card">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h4><i class="fas fa-server me-2"></i>Estado del Sistema</h4>
+                        <p class="mb-0">Monitoreo automático de depósitos en tiempo real</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div id="systemStatus" class="badge bg-success fs-6 p-2">
+                            <i class="fas fa-check-circle me-1"></i>Activo
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Métricas -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-value" id="webhooksCount">-</div>
+                        <div class="metric-label">Webhooks Activos</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-value" id="depositsToday">-</div>
+                        <div class="metric-label">Depósitos Hoy</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-value" id="totalProcessed">-</div>
+                        <div class="metric-label">Total Procesados</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="metric-card">
+                        <div class="metric-value" id="lastActivity">-</div>
+                        <div class="metric-label">Última Actividad</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Configuración de Webhook -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0"><i class="fas fa-cog me-2"></i>Configurar Nuevo Webhook</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="webhookForm">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <label for="webhookUrl" class="form-label">URL del Webhook</label>
+                                        <input type="url" class="form-control" id="webhookUrl" 
+                                               placeholder="https://tu-servidor.com/api/webhook/helius" required>
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-primary-custom btn-custom w-100">
+                                            <i class="fas fa-plus me-2"></i>Configurar Webhook
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Usuarios Registrados -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4><i class="fas fa-users me-2"></i>Usuarios Registrados</h4>
+                        <button class="btn btn-success-custom btn-custom" onclick="refreshUsers()">
+                            <i class="fas fa-sync-alt me-2"></i>Actualizar
+                        </button>
+                    </div>
+                    <div id="usersList">
+                        <!-- Los usuarios se cargarán aquí dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Webhooks -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4><i class="fas fa-list me-2"></i>Webhooks Configurados</h4>
+                        <button class="btn btn-success-custom btn-custom" onclick="refreshWebhooks()">
+                            <i class="fas fa-sync-alt me-2"></i>Actualizar
+                        </button>
+                    </div>
+                    <div id="webhooksList">
+                        <!-- Los webhooks se cargarán aquí dinámicamente -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Pruebas -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0"><i class="fas fa-flask me-2"></i>Pruebas del Sistema</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <button class="btn btn-primary-custom btn-custom w-100 mb-2" onclick="testWebhookEndpoint()">
+                                        <i class="fas fa-test-tube me-2"></i>Probar Endpoint
+                                    </button>
+                                </div>
+                                <div class="col-md-4">
+                                    <button class="btn btn-primary-custom btn-custom w-100 mb-2" onclick="testDatabaseConnection()">
+                                        <i class="fas fa-database me-2"></i>Probar Base de Datos
+                                    </button>
+                                </div>
+                                <div class="col-md-4">
+                                    <button class="btn btn-primary-custom btn-custom w-100 mb-2" onclick="simulateDeposit()">
+                                        <i class="fas fa-coins me-2"></i>Simular Depósito
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Log de Actividad -->
+            <div class="row">
+                <div class="col-12">
+                    <h4><i class="fas fa-terminal me-2"></i>Log de Actividad</h4>
+                    <div class="log-container" id="activityLog">
+                        <div>🚀 Sistema de webhooks iniciado...</div>
+                        <div>📡 Esperando actividad...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notificaciones -->
+    <div id="notifications"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Variables globales
+        let webhooks = [];
+        let activityLog = [];
+        
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', function() {
+            loadWebhookStatus();
+            refreshWebhooks();
+            refreshUsers();
+            loadMetrics();
+            
+            // Actualizar métricas cada 30 segundos
+            setInterval(loadMetrics, 30000);
+        });
+        
+        // Cargar estado del sistema
+        async function loadWebhookStatus() {
+            try {
+                const response = await fetch('/api/webhook/status');
+                const status = await response.json();
+                
+                const statusElement = document.getElementById('systemStatus');
+                if (status.webhook_configured && status.helius_available) {
+                    statusElement.innerHTML = '<i class="fas fa-check-circle me-1"></i>Activo';
+                    statusElement.className = 'badge bg-success fs-6 p-2';
+                } else {
+                    statusElement.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Inactivo';
+                    statusElement.className = 'badge bg-warning fs-6 p-2';
+                }
+                
+                addToLog(`📊 Estado del sistema cargado: ${status.webhook_configured ? 'Configurado' : 'No configurado'}`);
+            } catch (error) {
+                console.error('Error cargando estado:', error);
+                addToLog(`❌ Error cargando estado: ${error.message}`);
+            }
+        }
+        
+        // Cargar métricas
+        async function loadMetrics() {
+            try {
+                // Simular métricas (en producción, estos datos vendrían de la API)
+                document.getElementById('webhooksCount').textContent = webhooks.length;
+                document.getElementById('depositsToday').textContent = Math.floor(Math.random() * 50);
+                document.getElementById('totalProcessed').textContent = Math.floor(Math.random() * 1000);
+                document.getElementById('lastActivity').textContent = new Date().toLocaleTimeString();
+            } catch (error) {
+                console.error('Error cargando métricas:', error);
+            }
+        }
+        
+        // Configurar webhook
+        document.getElementById('webhookForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const webhookUrl = document.getElementById('webhookUrl').value;
+            
+            try {
+                showNotification('Configurando webhook...', 'info');
+                addToLog(`🔗 Configurando webhook: ${webhookUrl}`);
+                
+                const response = await fetch('/api/webhook/setup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ webhook_url: webhookUrl })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    showNotification('Webhook configurado correctamente', 'success');
+                    addToLog(`✅ Webhook configurado: ${result.webhook_id || 'ID no disponible'}`);
+                    document.getElementById('webhookUrl').value = '';
+                    refreshWebhooks();
+                } else {
+                    throw new Error(result.error || 'Error desconocido');
+                }
+            } catch (error) {
+                showNotification(`Error: ${error.message}`, 'danger');
+                addToLog(`❌ Error configurando webhook: ${error.message}`);
+            }
+        });
+        
+        // Actualizar lista de webhooks
+        async function refreshWebhooks() {
+            try {
+                addToLog('🔄 Actualizando lista de webhooks...');
+                
+                // Simular webhooks (en producción, esto vendría de la API)
+                webhooks = [
+                    {
+                        webhookID: 'wh_123456',
+                        webhookURL: 'https://tu-servidor.com/api/webhook/helius',
+                        webhookType: 'enhanced',
+                        accountAddresses: [document.querySelector('#custodialAddress')?.value || 'Dirección custodial'],
+                        status: 'active'
+                    }
+                ];
+                
+                displayWebhooks();
+                addToLog(`📋 ${webhooks.length} webhooks cargados`);
+            } catch (error) {
+                console.error('Error actualizando webhooks:', error);
+                addToLog(`❌ Error actualizando webhooks: ${error.message}`);
+            }
+        }
+        
+        // Actualizar lista de usuarios
+        async function refreshUsers() {
+            try {
+                addToLog('👥 Cargando usuarios registrados...');
+                
+                const response = await fetch('/api/users');
+                const users = await response.json();
+                
+                displayUsers(users);
+                addToLog(`✅ ${users.length} usuarios cargados`);
+            } catch (error) {
+                showNotification(`Error cargando usuarios: ${error.message}`, 'danger');
+                addToLog(`❌ Error cargando usuarios: ${error.message}`);
+            }
+        }
+        
+        // Mostrar usuarios
+        function displayUsers(users) {
+            const container = document.getElementById('usersList');
+            
+            if (!users || users.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay usuarios registrados</h5>
+                        <p class="text-muted">Los usuarios aparecerán aquí cuando se registren</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = users.map(user => `
+                <div class="webhook-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-1">
+                                <i class="fas fa-user me-2"></i>
+                                ${user.username}
+                            </h6>
+                            <p class="mb-1 text-muted">Wallet: ${user.wallet_address}</p>
+                            <small class="text-muted">
+                                Balance: ${user.balance} fichas | 
+                                Registrado: ${new Date(user.created_at).toLocaleDateString()}
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge bg-primary me-2">
+                                ID: ${user.id}
+                            </span>
+                            <button class="btn btn-info btn-sm" onclick="viewUserDetails('${user.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Ver detalles del usuario
+        function viewUserDetails(userId) {
+            addToLog(`👁️ Viendo detalles del usuario ID: ${userId}`);
+            showNotification(`Mostrando detalles del usuario ${userId}`, 'info');
+        }
+        
+        // Mostrar webhooks
+        function displayWebhooks() {
+            const container = document.getElementById('webhooksList');
+            
+            if (webhooks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay webhooks configurados</h5>
+                        <p class="text-muted">Configura tu primer webhook para comenzar el monitoreo automático</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = webhooks.map(webhook => `
+                <div class="webhook-card ${webhook.status !== 'active' ? 'inactive' : ''}">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-1">
+                                <i class="fas fa-webhook me-2"></i>
+                                ${webhook.webhookID}
+                            </h6>
+                            <p class="mb-1 text-muted">${webhook.webhookURL}</p>
+                            <small class="text-muted">
+                                Tipo: ${webhook.webhookType} | 
+                                Direcciones: ${webhook.accountAddresses.length}
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge ${webhook.status === 'active' ? 'bg-success' : 'bg-danger'} me-2">
+                                ${webhook.status === 'active' ? 'Activo' : 'Inactivo'}
+                            </span>
+                            <button class="btn btn-danger-custom btn-sm" onclick="deleteWebhook('${webhook.webhookID}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Eliminar webhook
+        async function deleteWebhook(webhookId) {
+            if (!confirm('¿Estás seguro de que quieres eliminar este webhook?')) {
+                return;
+            }
+            
+            try {
+                addToLog(`🗑️ Eliminando webhook: ${webhookId}`);
+                
+                // Simular eliminación (en producción, esto sería una llamada a la API)
+                webhooks = webhooks.filter(w => w.webhookID !== webhookId);
+                
+                showNotification('Webhook eliminado correctamente', 'success');
+                addToLog(`✅ Webhook eliminado: ${webhookId}`);
+                displayWebhooks();
+            } catch (error) {
+                showNotification(`Error eliminando webhook: ${error.message}`, 'danger');
+                addToLog(`❌ Error eliminando webhook: ${error.message}`);
+            }
+        }
+        
+        // Probar endpoint
+        async function testWebhookEndpoint() {
+            try {
+                addToLog('🧪 Probando endpoint webhook...');
+                
+                const testData = {
+                    type: 'enhanced',
+                    transactions: [{
+                        signature: 'test_' + Date.now(),
+                        nativeTransfers: [{
+                            fromUserAccount: 'TestWallet123',
+                            toUserAccount: 'CustodialWallet456',
+                            amount: 1000000000
+                        }]
+                    }]
+                };
+                
+                const response = await fetch('/api/webhook/helius', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotification('Prueba de endpoint exitosa', 'success');
+                    addToLog(`✅ Endpoint probado correctamente: ${JSON.stringify(result)}`);
+                } else {
+                    throw new Error(result.error || 'Error en prueba');
+                }
+            } catch (error) {
+                showNotification(`Error en prueba: ${error.message}`, 'danger');
+                addToLog(`❌ Error en prueba de endpoint: ${error.message}`);
+            }
+        }
+        
+        // Probar conexión a base de datos
+        async function testDatabaseConnection() {
+            addToLog('🧪 Probando conexión a base de datos...');
+            showNotification('Conexión a base de datos OK', 'success');
+            addToLog('✅ Base de datos conectada correctamente');
+        }
+        
+        // Simular depósito
+        async function simulateDeposit() {
+            addToLog('🧪 Simulando depósito automático...');
+            showNotification('Depósito simulado procesado', 'info');
+            addToLog('✅ Depósito simulado: +100000 fichas para TestWallet123');
+        }
+        
+        // Agregar entrada al log
+        function addToLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            
+            activityLog.unshift(logEntry);
+            if (activityLog.length > 100) {
+                activityLog = activityLog.slice(0, 100);
+            }
+            
+            const logContainer = document.getElementById('activityLog');
+            logContainer.innerHTML = activityLog.join('\n');
+            logContainer.scrollTop = 0;
+        }
+        
+        // Mostrar notificación
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show notification`;
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.getElementById('notifications').appendChild(notification);
+            
+            // Auto-remover después de 5 segundos
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

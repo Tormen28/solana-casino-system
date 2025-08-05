@@ -1,0 +1,9 @@
+{
+  "max_daily_withdraw_sol": 10,
+  "max_daily_withdrawals": 5,
+  "rate_limit_requests": 10,
+  "rate_limit_window": 60,
+  "signature_validation": true,
+  "suspicious_activity_detection": true,
+  "audit_logging": true
+}

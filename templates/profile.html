@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil de Usuario - La Más Alta Gana</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .profile-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .profile-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        .profile-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 3rem;
+        }
+        
+        .wallet-address {
+            font-family: 'Courier New', monospace;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 2rem;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .stat-card.tokens {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        
+        .stat-card.sol {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+        
+        .stat-card.games {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        
+        .stat-card.wins {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #333;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .transactions-section {
+            padding: 2rem;
+        }
+        
+        .transaction-item {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #007bff;
+        }
+        
+        .transaction-item.deposit {
+            border-left-color: #28a745;
+        }
+        
+        .transaction-item.withdraw {
+            border-left-color: #dc3545;
+        }
+        
+        .transaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .transaction-type {
+            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        
+        .transaction-type.deposit {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .transaction-type.withdraw {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .transaction-amount {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .transaction-details {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .btn-back {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: transform 0.2s;
+        }
+        
+        .btn-back:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* Estilos para modales de depósito y retiro */
+        .deposit-address-container {
+            margin: 20px 0;
+        }
+        
+        .deposit-address-box {
+            display: flex;
+            align-items: center;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin-top: 10px;
+        }
+        
+        .deposit-address-box span {
+            flex: 1;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        
+        .withdraw-summary {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .withdraw-summary p {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* Overlay de carga */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .spinner-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Estilos para notificaciones toast */
+        .toast-container {
+            z-index: 9999;
+        }
+        
+        .toast {
+            min-width: 250px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="profile-container">
+        <!-- Botón de regreso -->
+        <div class="mb-3">
+            <a href="/" class="btn-back">
+                <i class="fas fa-arrow-left"></i>
+                Volver al Juego
+            </a>
+        </div>
+        
+        <!-- Tarjeta de Perfil -->
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h2 id="userName">Cargando...</h2>
+                <button id="editUsernameBtn" class="btn btn-sm btn-outline-primary ms-2">✏️ Editar</button>
+                <div id="editUsernameForm" class="input-group input-group-sm mt-2" style="display:none; max-width:260px;">
+                    <input type="text" id="newUsernameInput" class="form-control" placeholder="Nuevo nombre">
+                    <button class="btn btn-success" id="saveUsernameBtn"><i class="fas fa-check"></i></button>
+                    <button class="btn btn-secondary" id="cancelUsernameBtn"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="wallet-address" id="walletAddress">Cargando dirección...</div>
+                <small>Miembro desde: <span id="memberSince">Cargando...</span></small>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card tokens">
+                    <div class="stat-value" id="gameTokens">0</div>
+                    <div class="stat-label">Fichas del Juego</div>
+                </div>
+                <div class="stat-card sol">
+                    <div class="stat-value" id="solBalance">0.0000</div>
+                    <div class="stat-label">Balance SOL</div>
+                </div>
+                <div class="stat-card games">
+                    <div class="stat-value" id="totalGames">0</div>
+                    <div class="stat-label">Juegos Totales</div>
+                </div>
+                <div class="stat-card wins">
+                    <div class="stat-value" id="winRate">0%</div>
+                    <div class="stat-label">Tasa de Victoria</div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3 mb-3">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                    <button id="depositBtn" class="btn btn-success me-md-2">
+                        <i class="fas fa-plus"></i> Depositar
+                    </button>
+                    <button id="withdrawBtn" class="btn btn-danger">
+                        <i class="fas fa-minus"></i> Retirar
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Historial de Transacciones de Depósitos/Retiros -->
+        <div class="profile-card">
+            <div class="transactions-section">
+                <h3 class="mb-4">
+                    <i class="fas fa-exchange-alt me-2"></i>
+                    Historial de Depósitos y Retiros
+                </h3>
+                
+                <div id="depositWithdrawLoading" class="loading">
+                    <div class="spinner"></div>
+                    <p class="mt-3">Cargando transacciones...</p>
+                </div>
+                
+                <div id="depositWithdrawList" style="display: none;"></div>
+                
+                <div id="emptyDepositWithdraw" class="empty-state" style="display: none;">
+                    <i class="fas fa-receipt"></i>
+                    <h4>Sin Depósitos ni Retiros</h4>
+                    <p>Aún no tienes depósitos o retiros registrados.</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Historial de Partidas -->
+        <div class="profile-card">
+            <div class="transactions-section">
+                <h3 class="mb-4">
+                    <i class="fas fa-gamepad me-2"></i>
+                    Historial de Partidas
+                </h3>
+                
+                <div id="gamesLoading" class="loading">
+                    <div class="spinner"></div>
+                    <p class="mt-3">Cargando historial de partidas...</p>
+                </div>
+                
+                <div id="gamesList" style="display: none;"></div>
+                
+                <div id="emptyGames" class="empty-state" style="display: none;">
+                    <i class="fas fa-dice"></i>
+                    <h4>Sin Partidas</h4>
+                    <p>Aún no has jugado ninguna partida.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Depósito -->
+    <div class="modal fade" id="depositModal" tabindex="-1" aria-labelledby="depositModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="depositModalLabel">Depositar SOL</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Envía SOL a la siguiente dirección para recibir fichas de juego.
+                    </div>
+                    
+                    <div class="deposit-address-container">
+                        <h6>Dirección de Depósito:</h6>
+                        <div class="deposit-address-box">
+                            <span id="depositAddress">Cargando...</span>
+                            <button id="copyAddressBtn" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Información de Conversión:</h6>
+                        <ul class="list-unstyled">
+                            <li><strong>Tasa:</strong> <span id="conversionRate">1 SOL = 100,000 fichas</span></li>
+                            <li><strong>Mínimo:</strong> <span id="minimumDeposit">0.001 SOL (100 fichas)</span></li>
+                            <li><strong>Tiempo:</strong> Las fichas se acreditan automáticamente</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong> Solo envía SOL desde tu wallet conectada. Los depósitos desde otras direcciones no se acreditarán automáticamente.
+                    </div>
+                    
+                    <div class="mt-4">
+                        <p><strong>Tasa de conversión:</strong> 1 SOL = 100 000 fichas</p>
+                        <p><strong>Mínimo:</strong> 0.01 SOL</p>
+                        <p class="text-muted">Los depósitos se acreditarán automáticamente después de 1 confirmación.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Retiro -->
+    <div class="modal fade" id="withdrawModal" tabindex="-1" aria-labelledby="withdrawModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="withdrawModalLabel">Retirar Fichas</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Convierte tus fichas de juego a SOL y retíralas a tu wallet.
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="withdrawTokens">Cantidad de Fichas:</label>
+                        <input type="number" class="form-control" id="withdrawTokens" placeholder="Ingresa cantidad de fichas">
+                        <small class="form-text text-muted">Tasa de conversión: 100 000 fichas = 1 SOL (menos 5% de comisión)</small>
+                    </div>
+                    
+                    <div class="form-group mb-3">
+                        <label for="destinationAddress">Dirección de Destino:</label>
+                        <input type="text" class="form-control" id="destinationAddress" placeholder="Ingresa la dirección SOL de destino">
+                        <small class="form-text text-muted">Dirección de wallet donde recibirás los SOL</small>
+                    </div>
+                    
+                    <div class="withdraw-summary">
+                        <p>Recibirás aproximadamente: <span id="withdrawSolAmount">0.0000</span> SOL</p>
+                        <p>Comisión (5%): <span id="withdrawFeeAmount">0.0000</span> SOL</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmWithdrawBtn">Confirmar Retiro</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Overlay de Carga -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="spinner-container">
+            <div class="spinner"></div>
+            <p id="loadingMessage">Procesando...</p>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentWalletAddress = null;
+        
+        // Inicializar modales
+        const depositModal = new bootstrap.Modal(document.getElementById('depositModal'));
+        const withdrawModal = new bootstrap.Modal(document.getElementById('withdrawModal'));
+        
+        // Event listeners para los botones de depósito y retiro
+        document.getElementById('depositBtn').addEventListener('click', async () => {
+            depositModal.show();
+        });
+        
+        document.getElementById('withdrawBtn').addEventListener('click', () => {
+            withdrawModal.show();
+        });
+        const TOKENS_PER_SOL = 100000;
+        const WITHDRAW_FEE_PERCENT = 0.05;
+        
+        // Habilitar / deshabilitar botón según saldo
+        const userProfileData = sessionStorage.getItem('userProfile');
+        if (userProfileData) {
+            const p = JSON.parse(userProfileData);
+            document.getElementById('confirmWithdrawBtn').disabled = p.game_tokens < 10000;
+        }
+        
+        // Recalcular conversión y comisión conforme se escribe
+        document.getElementById('withdrawTokens').addEventListener('input', e => {
+            const tokens = parseInt(e.target.value || '0');
+            const sol = tokens / TOKENS_PER_SOL;
+            const fee = sol * WITHDRAW_FEE_PERCENT;
+            document.getElementById('withdrawSolAmount').textContent = (sol - fee).toFixed(4);
+            document.getElementById('withdrawFeeAmount').textContent = fee.toFixed(4);
+        });
+        
+        // Confirmar retiro
+        document.getElementById('confirmWithdrawBtn').addEventListener('click', async () => {
+            const tokens = parseInt(document.getElementById('withdrawTokens').value || '0');
+            const destinationAddress = document.getElementById('destinationAddress').value.trim();
+            const raw = sessionStorage.getItem('userProfile');
+            if (!raw) { showNotification('Sin perfil de usuario', 'error'); return; }
+            const profile = JSON.parse(raw);
+        
+            // Validaciones actualizadas
+            if (tokens < 1000) { showNotification('El mínimo de retiro es 1000 fichas (0.01 SOL)', 'error'); return; }
+            if (tokens > profile.game_tokens) { showNotification('Fondos insuficientes', 'error'); return; }
+            if (!destinationAddress) { showNotification('Dirección de destino requerida', 'error'); return; }
+            if (destinationAddress.length < 32 || destinationAddress.length > 44) { showNotification('Dirección de destino inválida', 'error'); return; }
+        
+            showLoading('Procesando retiro...');
+            try {
+                const res = await fetch('/api/withdraw/request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        wallet_address: profile.wallet_address, 
+                        chip_amount: tokens,
+                        destination_address: destinationAddress
+                    })
+                });
+                const data = await res.json();
+                hideLoading();
+                if (res.ok) {
+                    showNotification(`Retiro exitoso: ${data.net_sol_amount.toFixed(4)} SOL enviados`, 'success');
+                    // Actualizar saldo en el perfil
+                    profile.game_tokens = data.new_chip_balance;
+                    sessionStorage.setItem('userProfile', JSON.stringify(profile));
+                    document.getElementById('gameTokens').textContent = profile.game_tokens.toFixed(0);
+                    document.getElementById('withdrawTokens').value = '';
+                    document.getElementById('destinationAddress').value = '';
+                    bootstrap.Modal.getInstance(document.getElementById('withdrawModal')).hide();
+                    // Recargar historial
+                    loadDepositWithdrawHistory();
+                } else {
+                    showNotification(data.error || 'Error en retiro', 'error');
+                }
+            } catch (e) {
+                hideLoading();
+                showNotification('Error de red: ' + e.message, 'error');
+            }
+        });
+        
+        async function loadUserProfile() {
+            console.log('[DEBUG] Iniciando carga de perfil');
+            const connectedWallet = sessionStorage.getItem('connectedWallet');
+            console.log('[DEBUG] Wallet almacenada:', connectedWallet);
+            
+            // Obtener el nombre de usuario del sessionStorage (del index.html) o crear uno automático
+            const storedUsername = sessionStorage.getItem('username');
+            const defaultUsername = connectedWallet ? `Usuario_${connectedWallet.slice(-6)}` : 'Usuario';
+            const username = storedUsername || defaultUsername;
+            
+            console.log('[DEBUG] Username a usar:', username);
+            
+            // SIEMPRE permitir acceso - crear perfil básico si no hay wallet
+            if (!connectedWallet) {
+                const basicProfile = {
+                    wallet_address: null,
+                    username: username,
+                    game_tokens: 1000, // Fichas iniciales para usuarios sin wallet
+                    total_games: 0,
+                    total_wins: 0,
+                    created_at: new Date().toISOString()
+                };
+                updateProfileDisplay(basicProfile);
+                sessionStorage.setItem('userProfile', JSON.stringify(basicProfile));
+                return true;
+            }
+            
+            currentWalletAddress = connectedWallet;
+            
+            try {
+                const response = await fetch('/api/user/profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        wallet_address: currentWalletAddress,
+                        username: username
+                    })
+                });
+                
+                if (response.ok) {
+                    const profile = await response.json();
+                    updateProfileDisplay(profile);
+                    
+                    // Guardar en sessionStorage para uso futuro
+                    sessionStorage.setItem('userProfile', JSON.stringify(profile));
+                } else {
+                    // Si no existe el perfil, crear uno básico
+                    const basicProfile = {
+                        wallet_address: currentWalletAddress,
+                        username: `Usuario_${currentWalletAddress.slice(-6)}`,
+                        game_tokens: 0,
+                        total_games: 0,
+                        total_wins: 0,
+                        created_at: new Date().toISOString()
+                    };
+                    updateProfileDisplay(basicProfile);
+                }
+                
+                return true;
+                
+            } catch (apiError) {
+                console.error('Error obteniendo perfil de API:', apiError);
+                // Crear perfil básico si falla la API
+                const basicProfile = {
+                    wallet_address: currentWalletAddress,
+                    username: `Usuario_${currentWalletAddress.slice(-6)}`,
+                    game_tokens: 0,
+                    total_games: 0,
+                    total_wins: 0,
+                    created_at: new Date().toISOString()
+                };
+                updateProfileDisplay(basicProfile);
+                return true;
+            }
+            
+        }
+        
+        function updateProfileDisplay(profile) {
+            document.getElementById('userName').textContent = profile.username || 'Usuario';
+            const walletAddr = profile.wallet_address || '';
+            document.getElementById('walletAddress').textContent =  
+                walletAddr ? `${walletAddr.slice(0, 8)}...${walletAddr.slice(-8)}` : 'N/A';
+            
+            // Formatear fecha de creación
+            if (profile.created_at) {
+                const date = new Date(profile.created_at);
+                document.getElementById('memberSince').textContent = 
+                    date.toLocaleDateString('es-ES', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+            }
+            
+            // Actualizar estadísticas
+            document.getElementById('gameTokens').textContent = 
+                (profile.game_tokens || 0).toFixed(0);
+            document.getElementById('totalGames').textContent = profile.total_games || 0;
+            
+            // Calcular tasa de victoria
+            const totalGames = profile.total_games || 0;
+            const totalWins = profile.total_wins || 0;
+            const winRate = totalGames > 0 ? ((totalWins / totalGames) * 100).toFixed(1) : 0;
+            document.getElementById('winRate').textContent = `${winRate}%`;
+        }
+        
+        async function loadWalletBalance() {
+            try {
+                const response = await fetch(`/api/wallet/balance/${currentWalletAddress}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('solBalance').textContent = 
+                        `${(data.sol_balance || 0).toFixed(4)} SOL`;
+                }
+            } catch (error) {
+                console.error('Error cargando balance:', error);
+            }
+        }
+        
+        async function loadDepositWithdrawHistory() {
+            try {
+                // Cargar historial de depósitos
+                const depositResponse = await fetch(`/api/deposit/history/${currentWalletAddress}?limit=10`);
+                let allTransactions = [];
+                
+                if (depositResponse.ok) {
+                    const depositData = await depositResponse.json();
+                    allTransactions = [...(depositData.deposits || [])];
+                }
+                
+                // Cargar historial de retiros desde el nuevo endpoint
+                const withdrawResponse = await fetch(`/api/withdraw/history/${currentWalletAddress}?limit=10`);
+                
+                if (withdrawResponse.ok) {
+                    const withdrawData = await withdrawResponse.json();
+                    allTransactions = [...allTransactions, ...(withdrawData.withdrawals || [])];
+                }
+                
+                // Ordenar por fecha (más recientes primero)
+                allTransactions.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                
+                // Mostrar solo los últimos 10
+                allTransactions = allTransactions.slice(0, 10);
+                
+                const historyContainer = document.getElementById('depositWithdrawHistory');
+                if (allTransactions.length === 0) {
+                    historyContainer.innerHTML = '<p class="text-muted">No hay transacciones recientes</p>';
+                    return;
+                }
+                
+                let historyHTML = '';
+                allTransactions.forEach(tx => {
+                    const isDeposit = tx.type === 'deposit';
+                    const icon = isDeposit ? '↓' : '↑';
+                    const colorClass = isDeposit ? 'text-success' : 'text-warning';
+                    const typeText = isDeposit ? 'Depósito' : 'Retiro';
+                    
+                    let amountText = '';
+                    if (isDeposit) {
+                        amountText = `${tx.sol_amount} SOL → ${tx.chip_amount} fichas`;
+                    } else {
+                        amountText = `${tx.chip_amount} fichas → ${tx.net_amount.toFixed(4)} SOL`;
+                        if (tx.fee_amount > 0) {
+                            amountText += ` (fee: ${tx.fee_amount.toFixed(4)} SOL)`;
+                        }
+                    }
+                    
+                    const date = new Date(tx.created_at).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    historyHTML += `
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <span class="${colorClass} me-2">${icon}</span>
+                                <strong>${typeText}</strong>
+                                <br>
+                                <small class="text-muted">${amountText}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted">${date}</small>
+                                <br>
+                                <span class="badge bg-${tx.status === 'completed' ? 'success' : 'warning'}">
+                                    ${tx.status === 'completed' ? 'Completado' : 'Pendiente'}
+                                </span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                historyContainer.innerHTML = historyHTML;
+                
+            } catch (error) {
+                console.error('Error cargando historial:', error);
+                document.getElementById('depositWithdrawHistory').innerHTML = 
+                    '<p class="text-danger">Error cargando historial</p>';
+            }
+        }
+        
+        async function loadGameHistory() {
+            try {
+                const response = await fetch(`/api/wallet/transactions/${currentWalletAddress}?limit=20&type=games`);
+                const data = await response.json();
+                
+                document.getElementById('gamesLoading').style.display = 'none';
+                
+                if (response.ok && data.transactions && data.transactions.length > 0) {
+                    displayGameTransactions(data.transactions);
+                } else {
+                    document.getElementById('emptyGames').style.display = 'block';
+                }
+                
+            } catch (error) {
+                console.error('Error cargando historial de partidas:', error);
+                document.getElementById('gamesLoading').style.display = 'none';
+                document.getElementById('emptyGames').style.display = 'block';
+            }
+        }
+        
+        function displayDepositWithdrawTransactions(transactions) {
+            const container = document.getElementById('depositWithdrawList');
+            container.innerHTML = '';
+            
+            transactions.forEach(tx => {
+                const txElement = createTransactionElement(tx);
+                container.appendChild(txElement);
+            });
+            
+            container.style.display = 'block';
+        }
+        
+        function displayGameTransactions(transactions) {
+            const container = document.getElementById('gamesList');
+            container.innerHTML = '';
+            
+            transactions.forEach(tx => {
+                const txElement = createTransactionElement(tx);
+                container.appendChild(txElement);
+            });
+            
+            container.style.display = 'block';
+        }
+        
+        function createTransactionElement(tx) {
+            // Validaciones defensivas
+            if (!tx || typeof tx !== 'object') {
+                console.warn('Transacción inválida:', tx);
+                return document.createElement('div');
+            }
+            
+            const div = document.createElement('div');
+            const txType = tx.type || 'unknown';
+            const txAmount = tx.amount || 0;
+            const txSignature = tx.signature || 'N/A';
+            const txTimestamp = tx.timestamp || new Date().toISOString();
+            const txStatus = tx.status || 'unknown';
+            
+            div.className = `transaction-item ${txType}`;
+            
+            const typeLabel = txType === 'deposit' ? 'Depósito' : 
+                            txType === 'withdraw' ? 'Retiro' : 
+                            txType === 'bet' ? 'Apuesta' : 
+                            txType === 'win' ? 'Ganancia' : 'Transacción';
+            
+            const typeClass = txType === 'deposit' || txType === 'win' ? 'deposit' : 'withdraw';
+            const amountPrefix = txType === 'deposit' || txType === 'win' ? '+' : '-';
+            const amountColor = txType === 'deposit' || txType === 'win' ? 'text-success' : 'text-danger';
+            
+            div.innerHTML = `
+                <div class="transaction-header">
+                    <span class="transaction-type ${typeClass}">${typeLabel}</span>
+                    <span class="transaction-amount ${amountColor}">
+                        ${amountPrefix}${txAmount} ${txType && txType.includes('sol') ? 'SOL' : 'fichas'}
+                    </span>
+                </div>
+                <div class="transaction-details">
+                    <div><strong>Firma:</strong> ${txSignature}</div>
+                    <div><strong>Fecha:</strong> ${formatTimestamp(txTimestamp)}</div>
+                    <div><strong>Estado:</strong> 
+                        <span class="badge ${txStatus === 'success' ? 'bg-success' : 'bg-danger'}">
+                            ${txStatus === 'success' ? 'Exitoso' : 'Fallido'}
+                        </span>
+                    </div>
+                </div>
+            `;
+            
+            return div;
+        }
+        
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString('es-ES', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // Formatear dirección de wallet
+        function formatWalletAddress(address, prefixLength = 4, suffixLength = 4) {
+            if (!address) return 'N/A';
+            if (address.length <= prefixLength + suffixLength) return address;
+            return `${address.slice(0, prefixLength)}...${address.slice(-suffixLength)}`;
+        }
+        
+        // Mostrar notificación
+        function showNotification(message, type = 'info') {
+            // Crear elemento de notificación
+            const notification = document.createElement('div');
+            notification.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'primary'}`;
+            notification.setAttribute('role', 'alert');
+            notification.setAttribute('aria-live', 'assertive');
+            notification.setAttribute('aria-atomic', 'true');
+            
+            notification.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Agregar al contenedor de notificaciones
+            const container = document.querySelector('.toast-container') || (() => {
+                const cont = document.createElement('div');
+                cont.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                document.body.appendChild(cont);
+                return cont;
+            })();
+            
+            container.appendChild(notification);
+            
+            // Mostrar notificación
+            const toast = new bootstrap.Toast(notification, { delay: 5000 });
+            toast.show();
+            
+            // Eliminar después de ocultarse
+            notification.addEventListener('hidden.bs.toast', function() {
+                container.removeChild(notification);
+            });
+        }
+        
+        // Mostrar overlay de carga
+        function showLoading(message = 'Cargando...') {
+            document.getElementById('loadingMessage').textContent = message;
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+        
+        // Ocultar overlay de carga
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
+        // Obtener perfil de usuario
+        async function getUserProfile() {
+            try {
+                const response = await fetch(`/api/user/profile/${currentWalletAddress}`);
+                if (response.ok) {
+                    return await response.json();
+                }
+                return null;
+            } catch (error) {
+                console.error('Error obteniendo perfil:', error);
+                return null;
+            }
+        }
+        
+        async function autoReconnectWallet() {
+            if (sessionStorage.getItem('connectedWallet')) return;
+            if (!('phantom' in window)) return;
+            const provider = window.phantom?.solana;
+            if (!provider?.isPhantom) return;
+            try {
+                const resp = await provider.connect({ onlyIfTrusted: true });
+                if (resp.publicKey) {
+                    const addr = resp.publicKey.toString();
+                    sessionStorage.setItem('connectedWallet', addr);
+                    sessionStorage.setItem('useBlockchain', 'true');
+                    console.log('Auto-wallet reconnected', addr);
+                }
+            } catch (e) {
+                // usuario no confió previamente, ignorar
+            }
+        }
+        
+        // Inicializar la página cuando se carga
+        window.addEventListener('load', async () => {
+            console.log('[DEBUG] Página cargada, iniciando...');
+            showLoading('Cargando perfil...');
+            await autoReconnectWallet();
+            const success = await loadUserProfile();
+            if (success) {
+                loadWalletBalance();
+                loadDepositWithdrawHistory();
+                loadGameHistory();
+            }
+            hideLoading();
+        });
+    </script>
+</body>
+</html>
+<script>
+        
+        // Cargar dirección de depósito cuando se abre el modal
+        document.getElementById('depositBtn').addEventListener('click', async () => {
+            document.getElementById('depositAddress').textContent = 'Cargando...';
+            try {
+                const response = await fetch(`/api/deposit/address/${currentWalletAddress}`);
+                const data = await response.json();
+                if (response.ok && data.deposit_address) {
+                    document.getElementById('depositAddress').textContent = data.deposit_address;
+                    document.getElementById('conversionRate').textContent = data.conversion_rate;
+                    document.getElementById('minimumDeposit').textContent = data.minimum_deposit;
+                } else {
+                    document.getElementById('depositAddress').textContent = 'Error al cargar dirección';
+                    console.error('Error del servidor:', data.error);
+                }
+            } catch (error) {
+                console.error('Error cargando dirección de depósito:', error);
+                document.getElementById('depositAddress').textContent = 'Error de conexión';
+            }
+            const depositModal = new bootstrap.Modal(document.getElementById('depositModal'));
+            depositModal.show();
+        });
+        
+        // Copiar dirección al portapapeles
+        document.getElementById('copyAddressBtn').addEventListener('click', () => {
+            const addressText = document.getElementById('depositAddress').textContent;
+            if (addressText && addressText !== 'Cargando...' && addressText !== 'Error al cargar dirección' && addressText !== 'Error de conexión') {
+                navigator.clipboard.writeText(addressText)
+                    .then(() => {
+                        showNotification('Dirección copiada al portapapeles', 'success');
+                    })
+                    .catch(err => {
+                        console.error('Error al copiar:', err);
+                        showNotification('Error al copiar dirección', 'error');
+                    });
+            }
+        });
+        
+        // Habilitar / deshabilitar botón según saldo
+        const storedProfile = sessionStorage.getItem('userProfile');
+        if (storedProfile) {
+            const p = JSON.parse(storedProfile);
+            document.getElementById('confirmWithdrawBtn').disabled = p.game_tokens < 10000;
+        }
+        
+        // Recalcular conversión y comisión conforme se escribe
+        document.getElementById('withdrawTokens').addEventListener('input', e => {
+            const tokens = parseInt(e.target.value || '0');
+            const sol = tokens / TOKENS_PER_SOL;
+            const fee = sol * WITHDRAW_FEE_PERCENT;
+            document.getElementById('withdrawSolAmount').textContent = (sol - fee).toFixed(4);
+            document.getElementById('withdrawFeeAmount').textContent = fee.toFixed(4);
+        });
+        
+        // Función duplicada eliminada - usar la función principal de retiro
+        
+        async function loadUserProfile() {
+            console.log('[DEBUG] Iniciando carga de perfil');
+            const connectedWallet = sessionStorage.getItem('connectedWallet');
+            console.log('[DEBUG] Wallet almacenada:', connectedWallet);
+            // Verificar si hay un wallet conectado
+            // ELIMINAR ESTA LÍNEA: const connectedWallet = sessionStorage.getItem('connectedWallet');
+            
+            if (!connectedWallet) {
+                alert('Necesitas conectar tu wallet primero. Redirigiendo al inicio.');
+                window.location.href = '/';
+                return false;
+            }
+            
+            currentWalletAddress = connectedWallet;
+            
+            try {
+                const response = await fetch('/api/user/profile', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        wallet_address: currentWalletAddress,
+                        username: `Usuario_${currentWalletAddress.slice(-6)}`
+                    })
+                });
+                
+                if (response.ok) {
+                    const profile = await response.json();
+                    updateProfileDisplay(profile);
+                    
+                    // Guardar en sessionStorage para uso futuro
+                    sessionStorage.setItem('userProfile', JSON.stringify(profile));
+                } else {
+                    // Si no existe el perfil, crear uno básico
+                    const basicProfile = {
+                        wallet_address: currentWalletAddress,
+                        username: `Usuario_${currentWalletAddress.slice(-6)}`,
+                        game_tokens: 0,
+                        total_games: 0,
+                        total_wins: 0,
+                        created_at: new Date().toISOString()
+                    };
+                    updateProfileDisplay(basicProfile);
+                }
+                
+                return true;
+                
+            } catch (apiError) {
+                console.error('Error obteniendo perfil de API:', apiError);
+                // Crear perfil básico si falla la API
+                const basicProfile = {
+                    wallet_address: currentWalletAddress,
+                    username: `Usuario_${currentWalletAddress.slice(-6)}`,
+                    game_tokens: 0,
+                    total_games: 0,
+                    total_wins: 0,
+                    created_at: new Date().toISOString()
+                };
+                updateProfileDisplay(basicProfile);
+                return true;
+            }
+            
+        }
+        
+        function updateProfileDisplay(profile) {
+            document.getElementById('userName').textContent = profile.username || 'Usuario';
+            document.getElementById('walletAddress').textContent = 
+                `${profile.wallet_address.slice(0, 8)}...${profile.wallet_address.slice(-8)}`;
+            
+            // Formatear fecha de creación
+            if (profile.created_at) {
+                const date = new Date(profile.created_at);
+                document.getElementById('memberSince').textContent = 
+                    date.toLocaleDateString('es-ES', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+            }
+            
+            // Actualizar estadísticas
+            document.getElementById('gameTokens').textContent = 
+                (profile.game_tokens || 0).toFixed(0);
+            document.getElementById('totalGames').textContent = profile.total_games || 0;
+            
+            // Calcular tasa de victoria
+            const totalGames = profile.total_games || 0;
+            const totalWins = profile.total_wins || 0;
+            const winRate = totalGames > 0 ? ((totalWins / totalGames) * 100).toFixed(1) : 0;
+            document.getElementById('winRate').textContent = `${winRate}%`;
+        }
+        
+        async function loadWalletBalance() {
+            try {
+                const response = await fetch(`/api/wallet/balance/${currentWalletAddress}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('solBalance').textContent = 
+                        `${(data.sol_balance || 0).toFixed(4)} SOL`;
+                }
+            } catch (error) {
+                console.error('Error cargando balance:', error);
+            }
+        }
+        
+        async function loadDepositWithdrawHistory() {
+            try {
+                const response = await fetch(`/api/wallet/transactions/${currentWalletAddress}?limit=20&type=deposit_withdraw`);
+                const data = await response.json();
+                
+                document.getElementById('depositWithdrawLoading').style.display = 'none';
+                
+                if (response.ok && data.transactions && data.transactions.length > 0) {
+                    displayDepositWithdrawTransactions(data.transactions);
+                } else {
+                    document.getElementById('emptyDepositWithdraw').style.display = 'block';
+                }
+                
+            } catch (error) {
+                console.error('Error cargando depósitos/retiros:', error);
+                document.getElementById('depositWithdrawLoading').style.display = 'none';
+                document.getElementById('emptyDepositWithdraw').style.display = 'block';
+            }
+        }
+        
+        async function loadGameHistory() {
+            try {
+                const response = await fetch(`/api/wallet/transactions/${currentWalletAddress}?limit=20&type=games`);
+                const data = await response.json();
+                
+                document.getElementById('gamesLoading').style.display = 'none';
+                
+                if (response.ok && data.transactions && data.transactions.length > 0) {
+                    displayGameTransactions(data.transactions);
+                } else {
+                    document.getElementById('emptyGames').style.display = 'block';
+                }
+                
+            } catch (error) {
+                console.error('Error cargando historial de partidas:', error);
+                document.getElementById('gamesLoading').style.display = 'none';
+                document.getElementById('emptyGames').style.display = 'block';
+            }
+        }
+        
+        function displayDepositWithdrawTransactions(transactions) {
+            const container = document.getElementById('depositWithdrawList');
+            container.innerHTML = '';
+            
+            transactions.forEach(tx => {
+                const txElement = createTransactionElement(tx);
+                container.appendChild(txElement);
+            });
+            
+            container.style.display = 'block';
+        }
+        
+        function displayGameTransactions(transactions) {
+            const container = document.getElementById('gamesList');
+            container.innerHTML = '';
+            
+            transactions.forEach(tx => {
+                const txElement = createTransactionElement(tx);
+                container.appendChild(txElement);
+            });
+            
+            container.style.display = 'block';
+        }
+        
+        function createTransactionElement(tx) {
+            // Validaciones defensivas
+            if (!tx || typeof tx !== 'object') {
+                console.warn('Transacción inválida:', tx);
+                return document.createElement('div');
+            }
+            
+            const div = document.createElement('div');
+            const txType = tx.type || 'unknown';
+            const txAmount = tx.amount || 0;
+            const txSignature = tx.signature || 'N/A';
+            const txTimestamp = tx.timestamp || new Date().toISOString();
+            const txStatus = tx.status || 'unknown';
+            
+            div.className = `transaction-item ${txType}`;
+            
+            const typeLabel = txType === 'deposit' ? 'Depósito' : 
+                            txType === 'withdraw' ? 'Retiro' : 
+                            txType === 'bet' ? 'Apuesta' : 
+                            txType === 'win' ? 'Ganancia' : 'Transacción';
+            
+            const typeClass = txType === 'deposit' || txType === 'win' ? 'deposit' : 'withdraw';
+            const amountPrefix = txType === 'deposit' || txType === 'win' ? '+' : '-';
+            const amountColor = txType === 'deposit' || txType === 'win' ? 'text-success' : 'text-danger';
+            
+            div.innerHTML = `
+                <div class="transaction-header">
+                    <span class="transaction-type ${typeClass}">${typeLabel}</span>
+                    <span class="transaction-amount ${amountColor}">
+                        ${amountPrefix}${txAmount} ${txType && txType.includes('sol') ? 'SOL' : 'fichas'}
+                    </span>
+                </div>
+                <div class="transaction-details">
+                    <div><strong>Firma:</strong> ${txSignature}</div>
+                    <div><strong>Fecha:</strong> ${formatTimestamp(txTimestamp)}</div>
+                    <div><strong>Estado:</strong> 
+                        <span class="badge ${txStatus === 'success' ? 'bg-success' : 'bg-danger'}">
+                            ${txStatus === 'success' ? 'Exitoso' : 'Fallido'}
+                        </span>
+                    </div>
+                </div>
+            `;
+            
+            return div;
+        }
+        
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp * 1000);
+            return date.toLocaleString('es-ES', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // Formatear dirección de wallet
+        function formatWalletAddress(address, prefixLength = 4, suffixLength = 4) {
+            if (!address) return 'N/A';
+            if (address.length <= prefixLength + suffixLength) return address;
+            return `${address.slice(0, prefixLength)}...${address.slice(-suffixLength)}`;
+        }
+        
+        // Mostrar notificación
+        function showNotification(message, type = 'info') {
+            // Crear elemento de notificación
+            const notification = document.createElement('div');
+            notification.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'primary'}`;
+            notification.setAttribute('role', 'alert');
+            notification.setAttribute('aria-live', 'assertive');
+            notification.setAttribute('aria-atomic', 'true');
+            
+            notification.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Agregar al contenedor de notificaciones
+            const container = document.querySelector('.toast-container') || (() => {
+                const cont = document.createElement('div');
+                cont.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+                document.body.appendChild(cont);
+                return cont;
+            })();
+            
+            container.appendChild(notification);
+            
+            // Mostrar notificación
+            const toast = new bootstrap.Toast(notification, { delay: 5000 });
+            toast.show();
+            
+            // Eliminar después de ocultarse
+            notification.addEventListener('hidden.bs.toast', function() {
+                container.removeChild(notification);
+            });
+        }
+        
+        // Mostrar overlay de carga
+        function showLoading(message = 'Cargando...') {
+            document.getElementById('loadingMessage').textContent = message;
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+        
+        // Ocultar overlay de carga
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+        
+        // Obtener perfil de usuario
+        async function getUserProfile() {
+            try {
+                const response = await fetch(`/api/user/profile/${currentWalletAddress}`);
+                if (response.ok) {
+                    return await response.json();
+                }
+                return null;
+            } catch (error) {
+                console.error('Error obteniendo perfil:', error);
+                return null;
+            }
+        }
+        
+        async function autoReconnectWallet() {
+            if (sessionStorage.getItem('connectedWallet')) return;
+            if (!('phantom' in window)) return;
+            const provider = window.phantom?.solana;
+            if (!provider?.isPhantom) return;
+            try {
+                const resp = await provider.connect({ onlyIfTrusted: true });
+                if (resp.publicKey) {
+                    const addr = resp.publicKey.toString();
+                    sessionStorage.setItem('connectedWallet', addr);
+                    sessionStorage.setItem('useBlockchain', 'true');
+                    console.log('Auto-wallet reconnected', addr);
+                }
+            } catch (e) {
+                // usuario no confió previamente, ignorar
+            }
+        }
+        
+        // Inicializar la página cuando se carga
+        window.addEventListener('load', async () => {
+            console.log('[DEBUG] Página cargada, iniciando...');
+            showLoading('Cargando perfil...');
+            await autoReconnectWallet();
+            const success = await loadUserProfile();
+            if (success) {
+                loadWalletBalance();
+                loadDepositWithdrawHistory();
+                loadGameHistory();
+            }
+            hideLoading();
+        });
+    </script>
+</body>
+</html>
+<script>
+// Funciones de edición de username
+function showEditUsername() {
+    document.getElementById('userName').style.display = 'none';
+    document.getElementById('editUsernameForm').style.display = 'flex';
+    document.getElementById('newUsernameInput').value = document.getElementById('userName').textContent.trim();
+}
+
+function cancelEdit() {
+    document.getElementById('editUsernameForm').style.display = 'none';
+    document.getElementById('userName').style.display = 'block';
+}
+
+async function saveUsername() {
+    const newUsername = document.getElementById('newUsernameInput').value.trim();
+    if (!newUsername) return alert('El nombre no puede estar vacío');
+    
+    try {
+        const response = await fetch('/api/user/profile', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                wallet_address: currentWalletAddress,
+                username: newUsername
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('userName').textContent = newUsername;
+            sessionStorage.setItem('userProfile', JSON.stringify({
+                ...JSON.parse(sessionStorage.getItem('userProfile') || '{}'),
+                username: newUsername
+            }));
+            alert('¡Nombre actualizado correctamente!');
+            cancelEdit();
+        } else {
+            alert('Error al guardar el nombre');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al guardar el nombre');
+    }
+}
+
+// Event listeners
+document.getElementById('editUsernameBtn').addEventListener('click', showEditUsername);
+document.getElementById('cancelUsernameBtn').addEventListener('click', cancelEdit);
+document.getElementById('saveUsernameBtn').addEventListener('click', saveUsername);
+</script>

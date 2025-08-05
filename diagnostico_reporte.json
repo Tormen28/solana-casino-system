@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-08-04T20:54:56.698860",
+  "problemas": [
+    "❌ CUSTODIAL_PRIVATE_KEY no configurada correctamente: YOUR_CUSTODIAL_PRIVATE_KEY_BASE58_HERE",
+    "❌ WEBHOOK_URL no configurada correctamente: https://tu-dominio.com/webhook",
+    "❌ WEBHOOK_URL no configurada"
+  ],
+  "soluciones": [
+    "✅ Configurar CUSTODIAL_PRIVATE_KEY con la clave privada real de la wallet custodial",
+    "✅ Configurar WEBHOOK_URL con la URL pública de tu servidor",
+    "✅ Configurar WEBHOOK_URL con la URL pública de tu servidor",
+    "✅ Ejemplo: https://tu-dominio.ngrok.io/api/webhook/helius"
+  ],
+  "estado_actual": {
+    "configuracion": {
+      "HELIUS_API_KEY": "1d5c9434-bebb-4b6b-81c6-c23ef35aed3e",
+      "CUSTODIAL_ADDRESS": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+      "CUSTODIAL_PRIVATE_KEY": "YOUR_CUSTODIAL_PRIVATE_KEY_BASE58_HERE",
+      "WEBHOOK_URL": "https://tu-dominio.com/webhook",
+      "HELIUS_NETWORK": "devnet"
+    },
+    "helius_conexion": true,
+    "base_datos": {
+      "perfiles": 6,
+      "transacciones": 27,
+      "usuario_encontrado": true
+    },
+    "servidor_local": true,
+    "servidor_status": {
+      "custodial_address": "7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU",
+      "helius_available": true,
+      "webhook_configured": true,
+      "webhook_url": "https://tu-dominio.com/webhook"
+    }
+  }
+}

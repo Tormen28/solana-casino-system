@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Más Alta Gana</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .game-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .table-option {
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .table-option:hover {
+            border-color: #ffd700;
+            transform: translateY(-2px);
+        }
+        .table-option.selected {
+            border-color: #ffd700;
+            background: rgba(255, 215, 0, 0.2);
+        }
+        .btn-gold {
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            border: none;
+            color: #1e3c72;
+            font-weight: bold;
+        }
+        .btn-gold:hover {
+            background: linear-gradient(45deg, #ffed4e, #ffd700);
+            color: #1e3c72;
+        }
+        
+        .table-option {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .table-option:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .table-option.selected {
+            border-color: #28a745;
+            background-color: rgba(40, 167, 69, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+        
+        .wallet-bar {
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .wallet-info .wallet-status {
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .wallet-info .user-name {
+            color: #ffd700;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .wallet-info .wallet-address {
+            color: #ccc;
+            font-size: 0.9em;
+            font-family: monospace;
+        }
+        
+        .wallet-balance .tokens {
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .wallet-balance .sol-balance {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+        
+        /* Estilos para indicadores de carga y notificaciones */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .loading-content {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #ffd700;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .toast-success {
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+        
+        .toast-error {
+            background: linear-gradient(45deg, #dc3545, #fd7e14);
+        }
+        
+        .toast-info {
+            background: linear-gradient(45deg, #17a2b8, #6f42c1);
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .game-container {
+                margin: 20px;
+                padding: 20px;
+            }
+            
+            .wallet-bar .container {
+                padding: 0 15px;
+            }
+            
+            .wallet-bar .d-flex {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .wallet-info, .wallet-balance {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Barra superior de wallet -->
+    <div id="walletBar" class="wallet-bar" style="display: none;">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center py-2">
+                <div class="wallet-info">
+                    <span class="wallet-status">🔗 Conectado</span>
+                    <span id="walletUserName" class="user-name"></span>
+                    <span id="walletAddress" class="wallet-address"></span>
+                </div>
+                <div class="wallet-balance">
+                    <span id="walletTokens" class="tokens">0 fichas</span>
+                    <span id="walletSol" class="sol-balance ms-2">0 SOL</span>
+                    <a href="/profile" class="btn btn-sm btn-info ms-2">👤 Perfil</a>
+                    <button id="disconnectWalletBtn" class="btn btn-sm btn-outline-light ms-2">Desconectar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="game-container">
+            <h1 class="text-center mb-4">🃏 La Más Alta Gana 🃏</h1>
+            <p class="text-center mb-4">¡El juego de cartas más emocionante! Gana 3 rondas consecutivas para llevarte el pozo final.</p>
+
+            <!-- Sección simplificada para crear o unirse a sala -->
+            <div id="roomSelection" class="mt-4">
+                <h3 class="text-center">Elige una opción</h3>
+                
+                <!-- Información de Wallet Conectada -->
+                <div id="walletConnectedInfo" class="mb-4 p-3 bg-success bg-opacity-10 border border-success rounded" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="wallet-info">
+                            <span class="text-success fw-bold">🔗 Wallet Conectada</span>
+                            <div class="small text-muted">
+                                <span id="walletUserNameForm" class="user-name"></span>
+                                <span id="walletAddressForm" class="wallet-address"></span>
+                            </div>
+                        </div>
+                        <div class="wallet-balance">
+                            <span id="walletTokensForm" class="badge bg-primary">0 fichas</span>
+                            <span id="walletSolForm" class="badge bg-info ms-1">0 SOL</span>
+                        </div>
+                    </div>
+                </div>
+                
+
+                
+                <!-- Selección de Mesa -->
+                <div class="mb-4">
+                    <label class="form-label">Tipo de Mesa:</label>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="table-option card p-3 text-center" data-bet="10">
+                                <h5 class="card-title">Mesa 10</h5>
+                                <p class="card-text">Apuesta: 10 fichas</p>
+                                <small class="text-muted">Principiantes</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="table-option card p-3 text-center selected" data-bet="100">
+                                <h5 class="card-title">Mesa 100</h5>
+                                <p class="card-text">Apuesta: 100 fichas</p>
+                                <small class="text-muted">Intermedio</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="table-option card p-3 text-center" data-bet="1000">
+                                <h5 class="card-title">Mesa 1000</h5>
+                                <p class="card-text">Apuesta: 1000 fichas</p>
+                                <small class="text-muted">Expertos</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Opción 1: Crear Sala Personalizada -->
+                <div class="mb-4 p-4 border border-warning rounded bg-warning bg-opacity-10">
+                    <h4 class="text-center mb-3">🎯 Crear Sala Personalizada</h4>
+                    <div class="input-group mb-3">
+                        <input type="text" id="roomId" class="form-control" placeholder="ID de la Sala (opcional)" maxlength="10">
+                        <button onclick="createCustomRoom()" class="btn btn-gold">Crear Sala</button>
+                    </div>
+                    <small class="text-muted d-block text-center">Crea una sala privada para jugar con amigos</small>
+                </div>
+                
+                <!-- Opción 2: Emparejamiento Rápido -->
+                <div class="mb-4 p-4 border border-success rounded bg-success bg-opacity-10">
+                    <h4 class="text-center mb-3">⚡ Emparejamiento Rápido</h4>
+                    <div class="text-center">
+                        <button type="button" id="playNowBtn" class="btn btn-success btn-lg px-5">Jugar Ahora</button>
+                        <button type="button" id="cancelFindBtn" class="btn btn-secondary btn-sm px-4 d-none mt-2">Cancelar búsqueda</button>
+                    </div>
+                    <small class="text-muted d-block text-center mt-2">Encuentra oponentes automáticamente</small>
+                </div>
+                
+                <!-- Botón de Wallet -->
+                <div class="text-center mb-3">
+                    <button type="button" id="connectWalletBtn" class="btn btn-outline-light btn-lg px-5">🔗 Conectar Wallet Phantom</button>
+                    <div id="walletStatus" class="mt-2 text-center" style="display: none;">
+                        <small class="text-success">✅ Wallet conectada: <span id="connectedAddress"></span></small>
+                    </div>
+                </div>
+                
+                <p id="statusMsg" class="mt-3 text-center"></p>
+            </div>
+            
+            <div class="mt-5">
+                <h5>📋 Reglas del Juego:</h5>
+                <ul class="small">
+                    <li><strong>Objetivo:</strong> Ganar 3 rondas consecutivas</li>
+                    <li><strong>Cartas:</strong> Rey (más alta) → As (más baja)</li>
+                    <li><strong>Apuestas:</strong> Inicial obligatoria + subida opcional de 20</li>
+                    <li><strong>Pozo:</strong> 50% al ganador de ronda, 50% al pozo final</li>
+                    <li><strong>Victoria:</strong> 3 consecutivas = todo el pozo final</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedTableBet = 100; // Valor por defecto
+        
+        // Manejar selección de mesa
+        document.querySelectorAll('.table-option').forEach(option => {
+            option.addEventListener('click', function() {
+                // Remover selección anterior
+                document.querySelectorAll('.table-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                // Seleccionar nueva opción
+                this.classList.add('selected');
+                selectedTableBet = parseInt(this.dataset.bet);
+            });
+        });
+        
+        // Función para crear sala personalizada
+        function createCustomRoom() {
+            const username = getUsername();
+            
+            const roomIdInput = document.getElementById('roomId');
+            let roomId = roomIdInput.value.trim();
+            
+            // Si no se especifica ID, generar uno aleatorio
+            if (!roomId) {
+                roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+            }
+            
+            sessionStorage.setItem('username', username);
+            sessionStorage.setItem('room_id', roomId);
+            sessionStorage.setItem('table_bet', selectedTableBet);
+            window.location.href = `/game/${roomId}`;
+        }
+        
+        // Función para obtener username (prioriza wallet, luego genera automático)
+        function getUsername() {
+            const userNameSpan = document.getElementById('walletUserName');
+            
+            // Si hay wallet conectada, usar ese nombre
+            if (userNameSpan && userNameSpan.textContent.trim()) {
+                return userNameSpan.textContent.trim();
+            }
+            
+            // Si no hay wallet, generar nombre automático
+            return 'Jugador_' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+    </script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+    const socket = io();
+    let searching = false;
+
+    const playNowBtn = document.getElementById('playNowBtn');
+    const cancelBtn = document.getElementById('cancelFindBtn');
+    const statusMsg = document.getElementById('statusMsg');
+
+    playNowBtn.addEventListener('click', () => {
+        const username = getUsername();
+        searching = true;
+        playNowBtn.disabled = true;
+        cancelBtn.classList.remove('d-none');
+        statusMsg.textContent = 'Buscando rival...';
+        const data = { username, table_bet: selectedTableBet };
+        socket.emit('find_game', data);
+    });
+
+    cancelBtn.addEventListener('click', () => {
+        socket.emit('cancel_find');
+    });
+
+    socket.on('waiting_for_player', (data) => {
+        const playersText = data.players_in_queue === 1 ? '1 jugador' : `${data.players_in_queue} jugadores`;
+        statusMsg.innerHTML = `
+            <div>🔍 Buscando partida... (Mesa ${data.table_bet})</div>
+            <div class="mt-1">
+                <strong>${playersText} en cola (máx. ${data.max_players})</strong>
+            </div>
+            <div class="mt-2">
+                <small>⏰ Timeout en 30 segundos - se agregarán bots automáticamente</small>
+            </div>
+            ${data.players_in_queue >= 2 ? `
+                <div class="mt-2">
+                    <button id="startManualBtn" class="btn btn-sm btn-warning">🚀 Iniciar con ${playersText}</button>
+                </div>
+            ` : ''}
+        `;
+        
+        // Agregar event listener para el botón de inicio manual
+        const startManualBtn = document.getElementById('startManualBtn');
+        if (startManualBtn) {
+            startManualBtn.addEventListener('click', () => {
+                socket.emit('start_manual_game', { table_bet: selectedTableBet });
+            });
+        }
+    });
+    
+    socket.on('queue_update', (data) => {
+        // Actualizar información de la cola en tiempo real
+        if (searching) {
+            const playersText = data.players_in_queue === 1 ? '1 jugador' : `${data.players_in_queue} jugadores`;
+            const currentStatus = statusMsg.innerHTML;
+            if (currentStatus.includes('Buscando partida')) {
+                statusMsg.innerHTML = currentStatus.replace(
+                    /\d+ jugadores? en cola/,
+                    `${playersText} en cola`
+                ).replace(
+                    /Iniciar con \d+ jugadores?/,
+                    `Iniciar con ${playersText}`
+                );
+                
+                // Mostrar/ocultar botón de inicio manual
+                const startManualBtn = document.getElementById('startManualBtn');
+                if (data.players_in_queue >= 2 && !startManualBtn) {
+                    const buttonDiv = document.createElement('div');
+                    buttonDiv.className = 'mt-2';
+                    buttonDiv.innerHTML = `<button id="startManualBtn" class="btn btn-sm btn-warning">🚀 Iniciar con ${playersText}</button>`;
+                    statusMsg.appendChild(buttonDiv);
+                    
+                    document.getElementById('startManualBtn').addEventListener('click', () => {
+                        socket.emit('start_manual_game', { table_bet: selectedTableBet });
+                    });
+                }
+            }
+        }
+    });
+
+    socket.on('matched', ({ room_id }) => {
+        const username = getUsername();
+        sessionStorage.setItem('username', username);
+        sessionStorage.setItem('room_id', room_id);
+        sessionStorage.setItem('table_bet', selectedTableBet);
+        window.location.href = `/game/${room_id}`;
+    });
+
+    socket.on('match_canceled', () => {
+        searching = false;
+        playNowBtn.disabled = false;
+        cancelBtn.classList.add('d-none');
+        statusMsg.textContent = '';
+    });
+
+    socket.on('error', ({ message }) => {
+        alert(message);
+        playNowBtn.disabled = false;
+        cancelBtn.classList.add('d-none');
+        statusMsg.textContent = '';
+    });
+    
+    // ================= FUNCIONALIDAD DE WALLET BAR =================
+    
+    // Verificar si hay wallet conectada al cargar la página
+    document.addEventListener('DOMContentLoaded', function() {
+        checkWalletConnection();
+    });
+    
+    function checkWalletConnection() {
+        // Verificar si hay datos de wallet en sessionStorage
+        const userProfile = sessionStorage.getItem('userProfile');
+        const useBlockchain = sessionStorage.getItem('useBlockchain');
+        
+        console.log('Debug - useBlockchain:', useBlockchain);
+        console.log('Debug - userProfile:', userProfile);
+        
+        if (useBlockchain === 'true' && userProfile) {
+            try {
+                const profile = JSON.parse(userProfile);
+                console.log('Debug - parsed profile:', profile);
+                showWalletBar(profile);
+            } catch (error) {
+                console.error('Error parsing user profile:', error);
+            }
+        } else {
+            console.log('Debug - No wallet connection detected');
+        }
+    }
+    
+    function showWalletBar(profile) {
+        console.log('Debug - showWalletBar called with profile:', profile);
+        
+        const walletBar = document.getElementById('walletBar');
+        const userNameSpan = document.getElementById('walletUserName');
+        const walletAddressSpan = document.getElementById('walletAddress');
+        const tokensSpan = document.getElementById('walletTokens');
+        
+        console.log('Debug - DOM elements found:', {
+            walletBar: !!walletBar,
+            userNameSpan: !!userNameSpan,
+            walletAddressSpan: !!walletAddressSpan,
+            tokensSpan: !!tokensSpan
+        });
+        
+        if (!walletBar) {
+            console.error('walletBar element not found!');
+            return;
+        }
+        
+        // Mostrar información del usuario
+        if (userNameSpan) userNameSpan.textContent = profile.username || 'Usuario';
+        // Evitar TypeError si no hay wallet_address
+        if (walletAddressSpan) {
+            walletAddressSpan.textContent = profile.wallet_address
+                ? `${profile.wallet_address.slice(0, 8)}...${profile.wallet_address.slice(-8)}`
+                : 'N/A';
+        }
+        if (tokensSpan) tokensSpan.textContent = `${profile.game_tokens || 0} fichas`;
+        const solSpan = document.getElementById('walletSol');
+        if (solSpan) {
+            const solBal = profile.sol_balance || ((profile.game_tokens || 0) / 100000);
+            solSpan.textContent = `${solBal.toFixed(4)} SOL`;
+        }
+        
+        // Mostrar la barra
+        walletBar.style.display = 'block';
+        console.log('Debug - walletBar display set to block');
+    }
+    
+    function hideWalletBar() {
+        const walletBar = document.getElementById('walletBar');
+        walletBar.style.display = 'none';
+    }
+    
+    // Manejar desconexión de wallet
+    document.getElementById('disconnectWalletBtn').addEventListener('click', function() {
+        if (confirm('¿Estás seguro de que quieres desconectar tu wallet?')) {
+            // Limpiar datos de sesión
+            sessionStorage.removeItem('userProfile');
+            sessionStorage.removeItem('useBlockchain');
+            
+            // Ocultar barra de wallet
+            hideWalletBar();
+            
+            alert('Wallet desconectada exitosamente.');
+        }
+    });
+    
+    // Actualizar información de wallet periódicamente
+    setInterval(function() {
+        const userProfile = sessionStorage.getItem('userProfile');
+        const useBlockchain = sessionStorage.getItem('useBlockchain');
+        
+        if (useBlockchain === 'true' && userProfile) {
+            try {
+                const profile = JSON.parse(userProfile);
+                // Aquí podrías hacer una llamada al backend para actualizar el balance
+                // Por ahora solo actualizamos con los datos existentes
+                updateWalletDisplay(profile);
+            } catch (error) {
+                console.error('Error updating wallet display:', error);
+            }
+        }
+    }, 30000); // Actualizar cada 30 segundos
+    
+    function updateWalletDisplay(profile) {
+        const tokensSpan = document.getElementById('walletTokens');
+        const solSpan = document.getElementById('walletSol');
+        if (tokensSpan) {
+            tokensSpan.textContent = `${profile.game_tokens || 0} fichas`;
+        }
+        if (solSpan) {
+            const solBal = profile.sol_balance || ((profile.game_tokens || 0) / 100000);
+            solSpan.textContent = `${solBal.toFixed(4)} SOL`;
+        }
+    }
+    </script>
+
+    <!-- Modal de Depósito -->
+    <div class="modal fade" id="depositModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header">
+                    <h5 class="modal-title">Depositar SOL</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p>Envía SOL a esta dirección custodial. Se acreditará 1 SOL = 100,000 fichas.</p>
+                    <div class="input-group mb-3">
+                        <input id="depositAddressInput" type="text" class="form-control" readonly>
+                        <button class="btn btn-outline-secondary" id="copyDepositAddress">Copiar</button>
+                    </div>
+                    <small class="text-muted">Las fichas aparecerán una vez confirmada la transacción.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Retiro -->
+    <div class="modal fade" id="withdrawModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header">
+                    <h5 class="modal-title">Retirar SOL</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="withdrawTokens" class="form-label">Cantidad de fichas a retirar</label>
+                        <input type="number" class="form-control" id="withdrawTokens" min="1" step="1">
+                        <div class="form-text">Se aplicará una comisión del 5%. 100,000 fichas = 1 SOL.</div>
+                    </div>
+                    <button id="confirmWithdrawBtn" class="btn btn-danger w-100">Confirmar Retiro</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de carga -->
+    <div id="loadingModal" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h5 id="loadingText">Procesando...</h5>
+            <p class="mb-0">Por favor espera</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Inicializar modales
+        const depositModal = new bootstrap.Modal(document.getElementById('depositModal'));
+        const withdrawModal = new bootstrap.Modal(document.getElementById('withdrawModal'));
+        
+        // ========== FUNCIONES DE UTILIDAD ==========
+        
+        // Mostrar indicador de carga
+        function showLoading(message = 'Procesando...') {
+            document.getElementById('loadingText').textContent = message;
+            document.getElementById('loadingModal').style.display = 'flex';
+        }
+        
+        // Ocultar indicador de carga
+        function hideLoading() {
+            document.getElementById('loadingModal').style.display = 'none';
+        }
+        
+        // Mostrar notificación toast
+        function showNotification(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast-notification toast-${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            // Auto-remover después de 4 segundos
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 4000);
+        }
+        
+        // Validar monto de apuesta
+        function validateBetAmount(amount, userBalance) {
+            if (amount <= 0) {
+                showNotification('El monto debe ser mayor a 0', 'error');
+                return false;
+            }
+            if (amount > userBalance) {
+                showNotification('Fondos insuficientes', 'error');
+                return false;
+            }
+            return true;
+        }
+        
+        // Formatear dirección de wallet
+        function formatWalletAddress(address, startChars = 4, endChars = 4) {
+            if (!address) return '';
+            return address.slice(0, startChars) + '...' + address.slice(-endChars);
+        }
+
+        // Manejar copia de dirección
+        document.getElementById('copyDepositAddress').addEventListener('click', () => {
+            const input = document.getElementById('depositAddressInput');
+            input.select();
+            document.execCommand('copy');
+            showNotification('Dirección copiada al portapapeles', 'success');
+        });
+
+        // Manejar confirmación de retiro
+        document.getElementById('confirmWithdrawBtn').addEventListener('click', async () => {
+            const tokens = parseInt(document.getElementById('withdrawTokens').value || '0');
+            const profileRaw = sessionStorage.getItem('userProfile');
+            
+            if (!profileRaw) { 
+                showNotification('Sin perfil de usuario', 'error'); 
+                return; 
+            }
+            
+            const profile = JSON.parse(profileRaw);
+            
+            // Validar monto
+            if (!validateBetAmount(tokens, profile.game_tokens)) {
+                return;
+            }
+            
+            showLoading('Procesando retiro...');
+            
+            try {
+                const res = await fetch('/withdraw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ wallet: profile.wallet_address, tokens })
+                });
+                const data = await res.json();
+                
+                hideLoading();
+                
+                if (res.ok) {
+                    showNotification('Retiro exitoso', 'success');
+                    
+                    // Mostrar detalles de transacciones
+                    const txDetails = `TX Usuario: ${formatWalletAddress(data.tx_signature, 8, 8)}${data.commission_tx ? '\nTX Comisión: ' + formatWalletAddress(data.commission_tx, 8, 8) : ''}`;
+                    showNotification(txDetails, 'info');
+                    
+                    // Actualizar balance local
+                    profile.game_tokens -= tokens;
+                    sessionStorage.setItem('userProfile', JSON.stringify(profile));
+                    
+                    // Actualizar UI
+                    await updateWalletBalances();
+                    
+                    withdrawModal.hide();
+                    document.getElementById('withdrawTokens').value = '';
+                } else {
+                    showNotification(data.error || 'Error en retiro', 'error');
+                }
+            } catch (e) {
+                hideLoading();
+                showNotification('Error de red: ' + e.message, 'error');
+            }
+        });
+
+        // ========== INTEGRACIÓN DE WALLETS ==========
+        let connectedWallet = null;
+        
+        // Detectar Phantom Wallet
+        const getProvider = () => {
+            if ('phantom' in window) {
+                const provider = window.phantom?.solana;
+                if (provider?.isPhantom) {
+                    return provider;
+                }
+            }
+            window.open('https://phantom.app/', '_blank');
+            return null;
+        };
+        
+        // Conectar wallet
+        async function connectWallet() {
+            const provider = getProvider();
+            if (!provider) {
+                alert('Por favor instala Phantom Wallet');
+                return;
+            }
+            
+            try {
+                const resp = await provider.connect();
+                connectedWallet = resp.publicKey.toString();
+                sessionStorage.setItem('connectedWallet', connectedWallet);
+                sessionStorage.setItem('useBlockchain', 'true');
+                
+                // Actualizar UI
+                document.getElementById('connectWalletBtn').style.display = 'none';
+                document.getElementById('walletStatus').style.display = 'block';
+                document.getElementById('connectedAddress').textContent = 
+                    connectedWallet.slice(0, 4) + '...' + connectedWallet.slice(-4);
+                
+                // Mostrar barra de wallet
+                document.getElementById('walletBar').style.display = 'block';
+                document.getElementById('walletAddress').textContent = 
+                    connectedWallet.slice(0, 8) + '...' + connectedWallet.slice(-8);
+                
+                // Mostrar información en el formulario
+                document.getElementById('walletConnectedInfo').style.display = 'block';
+                document.getElementById('walletAddressForm').textContent = 
+                    connectedWallet.slice(0, 8) + '...' + connectedWallet.slice(-8);
+                
+                // Obtener y mostrar balances
+                await updateWalletBalances();
+                
+                console.log('Wallet conectada:', connectedWallet);
+            } catch (err) {
+                console.error('Error conectando wallet:', err);
+                alert('Error conectando wallet: ' + err.message);
+            }
+        }
+        
+        // Desconectar wallet
+        async function disconnectWallet() {
+            const provider = getProvider();
+            if (provider) {
+                try {
+                    await provider.disconnect();
+                } catch (err) {
+                    console.error('Error desconectando:', err);
+                }
+            }
+            
+            connectedWallet = null;
+            sessionStorage.removeItem('connectedWallet');
+            sessionStorage.removeItem('useBlockchain');
+            sessionStorage.removeItem('userProfile');
+            
+            // Actualizar UI
+            document.getElementById('connectWalletBtn').style.display = 'block';
+            document.getElementById('walletStatus').style.display = 'none';
+            document.getElementById('walletBar').style.display = 'none';
+            document.getElementById('walletConnectedInfo').style.display = 'none';
+            
+            console.log('Wallet desconectada');
+        }
+        
+        // Actualizar balances de wallet
+        async function updateWalletBalances() {
+            if (!connectedWallet) return;
+            
+            try {
+                // Obtener balance SOL
+                const solResponse = await fetch(`/api/wallet/balance/${connectedWallet}`);
+                const solData = await solResponse.json();
+                
+                // Obtener perfil de usuario
+                const profileResponse = await fetch(`/api/user/profile/${connectedWallet}`);
+                const profileData = await profileResponse.json();
+                
+                // Actualizar UI
+                document.getElementById('walletSol').textContent = 
+                    `${solData.sol_balance?.toFixed(4) || '0.0000'} SOL`;
+                document.getElementById('walletTokens').textContent = 
+                    `${profileData.game_tokens?.toFixed(0) || '0'} fichas`;
+                
+                // Actualizar información en el formulario
+                document.getElementById('walletTokensForm').textContent = 
+                    `${profileData.game_tokens?.toFixed(0) || '0'} fichas`;
+                document.getElementById('walletSolForm').textContent = 
+                    `${solData.sol_balance?.toFixed(4) || '0.0000'} SOL`;
+                document.getElementById('walletUserNameForm').textContent = 
+                    profileData.username || 'Usuario';
+                
+                // Guardar perfil en sessionStorage
+                if (profileData.wallet_address) {
+                    sessionStorage.setItem('userProfile', JSON.stringify(profileData));
+                }
+                
+            } catch (error) {
+                console.error('Error actualizando balances:', error);
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
+        document.getElementById('disconnectWalletBtn').addEventListener('click', disconnectWallet);
+        
+        // Verificar si ya hay una wallet conectada al cargar
+        window.addEventListener('load', async () => {
+            const provider = getProvider();
+            if (provider) {
+                try {
+                    const resp = await provider.connect({ onlyIfTrusted: true });
+                    if (resp.publicKey) {
+                        connectedWallet = resp.publicKey.toString();
+                        sessionStorage.setItem('connectedWallet', connectedWallet);
+                        sessionStorage.setItem('useBlockchain', 'true');
+                        
+                        // Actualizar UI sin mostrar popup
+                        document.getElementById('connectWalletBtn').style.display = 'none';
+                        document.getElementById('walletStatus').style.display = 'block';
+                        document.getElementById('connectedAddress').textContent = 
+                            connectedWallet.slice(0, 4) + '...' + connectedWallet.slice(-4);
+                        document.getElementById('walletBar').style.display = 'block';
+                        document.getElementById('walletAddress').textContent = 
+                            connectedWallet.slice(0, 8) + '...' + connectedWallet.slice(-8);
+                        
+                        // Mostrar información en el formulario
+                        document.getElementById('walletConnectedInfo').style.display = 'block';
+                        document.getElementById('walletAddressForm').textContent = 
+                            connectedWallet.slice(0, 8) + '...' + connectedWallet.slice(-8);
+                        
+                        await updateWalletBalances();
+                    }
+                } catch (err) {
+                    // Wallet no conectada previamente, no hacer nada
+                }
+            }
+        });
+    </script>
+    <script>
+        function createRoom() {
+            const roomId = Math.random().toString(36).substring(2, 8);
+            window.location.href = `/game/${roomId}`;
+        }
+
+        function joinRoom() {
+            const roomId = document.getElementById('room-id-input').value;
+            if (roomId) {
+                window.location.href = `/game/${roomId}`;
+            }
+        }
+    </script>
+</body>
+</html>
+

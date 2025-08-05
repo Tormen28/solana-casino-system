@@ -1,0 +1,27 @@
+{
+  "timestamp": "2025-08-04T20:58:13.552903",
+  "porcentaje_completitud": 60.0,
+  "estado_componentes": {
+    "helius_api_key": true,
+    "custodial_address": true,
+    "custodial_private_key": false,
+    "webhook_url": false,
+    "servidor_flask": true
+  },
+  "configuraciones_completadas": [
+    "WEBHOOK_URL configurada (requiere actualización manual)"
+  ],
+  "instrucciones_pendientes": [
+    {
+      "paso": "Configurar CUSTODIAL_PRIVATE_KEY",
+      "descripcion": "Agregar la clave privada de la wallet custodial en el archivo .env",
+      "comando": "Editar .env y reemplazar YOUR_CUSTODIAL_PRIVATE_KEY_BASE58_HERE"
+    },
+    {
+      "paso": "Configurar túnel ngrok",
+      "descripcion": "Crear túnel público para recibir webhooks",
+      "comando": "ngrok http 5000"
+    }
+  ],
+  "errores": []
+}

@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Más Alta Gana - Sala {{ room_id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            color: white;
+            font-family: 'Arial', sans-serif;
+        }
+        .game-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .game-header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        .pot-info {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        .pot-display {
+            background: rgba(255, 215, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #ffd700;
+        }
+        .player-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px 0;
+            backdrop-filter: blur(10px);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .player-card.active {
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        .player-card.self {
+            border-color: #00ff00;
+        }
+        .player-card.winner {
+            border-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.2);
+        }
+        .card {
+            width: 80px;
+            height: 120px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: black;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 10px auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        .card.red {
+            color: red;
+        }
+        .card-back {
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            color: white;
+            font-size: 24px;
+        }
+        .game-controls {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+        }
+        .btn-game {
+            margin: 5px;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 25px;
+        }
+        .btn-raise {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            border: none;
+            color: white;
+        }
+        .btn-call {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            border: none;
+            color: white;
+        }
+        .btn-fold {
+            background: linear-gradient(45deg, #95a5a6, #7f8c8d);
+            border: none;
+            color: white;
+        }
+        .btn-pass {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+            border: none;
+            color: white;
+        }
+        .btn-start {
+            background: linear-gradient(45deg, #00c851, #007e33);
+            border: none;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 200, 81, 0.4);
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+        }
+        .btn-start:hover {
+            background: linear-gradient(45deg, #007e33, #00c851);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 200, 81, 0.6);
+        }
+        @keyframes pulse {
+             0% { box-shadow: 0 4px 15px rgba(0, 200, 81, 0.4); }
+             50% { box-shadow: 0 4px 25px rgba(0, 200, 81, 0.8); }
+             100% { box-shadow: 0 4px 15px rgba(0, 200, 81, 0.4); }
+         }
+         .btn-bots {
+             background: linear-gradient(45deg, #6c5ce7, #a29bfe);
+             border: none;
+             color: white;
+             font-weight: bold;
+             box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+             transition: all 0.3s ease;
+         }
+         .btn-bots:hover {
+            background: linear-gradient(45deg, #a29bfe, #6c5ce7);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(108, 92, 231, 0.6);
+        }
+        .btn-danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-danger:hover {
+            background: linear-gradient(45deg, #c0392b, #a93226);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(231, 76, 60, 0.6);
+        }
+        .consecutive-wins {
+            background: linear-gradient(45deg, #8e44ad, #9b59b6);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .game-phase {
+            text-align: center;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        .phase-waiting {
+            background: rgba(52, 152, 219, 0.3);
+        }
+        .phase-betting {
+            background: rgba(241, 196, 15, 0.3);
+        }
+        .phase-revealing {
+            background: rgba(46, 204, 113, 0.3);
+        }
+        .phase-finished {
+            background: rgba(231, 76, 60, 0.3);
+        }
+    </style>
+    <style>
+        .player-card.bot {
+            background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+            border: 2px solid #4ca1af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid game-container">
+        <div class="game-header">
+            <h1>🃏 La Más Alta Gana 🃏</h1>
+            <h3>Sala: <span id="room-id">{{ room_id }}</span></h3>
+            
+            <div class="pot-info">
+                <div class="pot-display">
+                    <h5>Pozo de la Ronda</h5>
+                    <h3 id="potDisplay">0 fichas</h3>
+                </div>
+                <div class="pot-display">
+                    <h5>Pozo Final</h5>
+                    <h3 id="finalPot">0 fichas</h3>
+                </div>
+                <div class="pot-display">
+                    <h5>Mesa</h5>
+                    <h3 id="tableBet">100 fichas</h3>
+                </div>
+            </div>
+            
+            <div id="gamePhase" class="game-phase phase-waiting">
+                Esperando jugadores...
+            </div>
+        </div>
+        
+        <div class="row" id="playersContainer">
+            <!-- Los jugadores se mostrarán aquí dinámicamente -->
+        </div>
+        
+        <div id="gameControls" class="game-controls" style="display: none;">
+            <h5 id="turnMessage">Es tu turno</h5>
+            <div id="firstRoundControls">
+                <button id="raiseBtn" class="btn btn-raise btn-game">Subir (20 fichas)</button>
+                <button id="passBtn" class="btn btn-call btn-game">Pasar</button>
+            </div>
+            <div id="secondRoundControls" style="display: none;">
+                <button id="callBtn" class="btn btn-call btn-game">Igualar (20 fichas)</button>
+                <button id="foldBtn" class="btn btn-fold btn-game">Retirarse</button>
+            </div>
+        </div>
+        
+        <div id="waiting-controls" class="text-center">
+            <button id="startGameBtn" class="btn btn-start btn-lg">🚀 Iniciar Partida (2+ jugadores)</button>
+            <button id="addBotsBtn" class="btn btn-bots btn-lg" style="margin-left: 10px;">🤖 Agregar Bots</button>
+        </div>
+
+        <div id="end-game-controls" class="text-center" style="display: none;">
+            <button id="play-again-btn" class="btn btn-success btn-lg">Jugar de Nuevo</button>
+            <button id="exitToLobbyBtn" class="btn btn-danger btn-lg" style="margin-left: 10px;">🚪 Salir al Lobby</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const socket = io();
+            const roomId = document.getElementById('room-id').textContent;
+            let currentPlayerId = null;
+
+            // UI Elements
+            const gameBoard = document.getElementById('playersContainer');
+            const potDisplay = document.getElementById('potDisplay');
+            const finalPotDisplay = document.getElementById('finalPot');
+            const tableBetDisplay = document.getElementById('tableBet');
+            const gamePhase = document.getElementById('gamePhase');
+            const gameControls = document.getElementById('gameControls');
+            const waitingControls = document.getElementById('waiting-controls') || document.createElement('div');
+            const endGameControls = document.getElementById('end-game-controls') || document.createElement('div');
+            const firstRoundControls = document.getElementById('firstRoundControls');
+            const secondRoundControls = document.getElementById('secondRoundControls');
+            const turnMessage = document.getElementById('turnMessage');
+
+            // Buttons
+            const startGameBtn = document.getElementById('startGameBtn');
+            const addBotBtn = document.getElementById('addBotsBtn');
+            const raiseBtn = document.getElementById('raiseBtn');
+            const passBtn = document.getElementById('passBtn');
+            const callBtn = document.getElementById('callBtn');
+            const foldBtn = document.getElementById('foldBtn');
+            const playAgainBtn = document.getElementById('play-again-btn');
+            const mainMenuBtn = document.getElementById('exitToLobbyBtn');
+
+            // Socket.IO connection and events
+            socket.on('connect', () => {
+                console.log('Connected to server with ID:', socket.id);
+                currentPlayerId = socket.id;
+                socket.emit('join_room', { room_id: roomId });
+            });
+
+            socket.on('game_state', (data) => {
+                console.log('Game state received:', data);
+                updateUI(data);
+            });
+
+            socket.on('round_over', (data) => {
+                console.log('Round over:', data);
+                gamePhase.textContent = `🏆 Ganador de la ronda: ${data.winner_id}`;
+                gamePhase.className = 'game-phase phase-finished';
+                // Show all cards at the end of the round
+                data.players.forEach(player => {
+                    const safePlayerId = player.id.replace(/[^a-zA-Z0-9-_]/g, '');
+                    const cardElement = document.querySelector(`#player-${safePlayerId} .card`);
+                    if (cardElement && player.hand.length > 0) {
+                        updateCard(cardElement, player.hand[0]);
+                    }
+                });
+                setTimeout(() => socket.emit('start_round', { room_id: roomId }), 3000);
+            });
+
+            socket.on('round_tie', (data) => {
+                console.log('Round tie:', data);
+                gamePhase.textContent = '🤝 ¡Empate! Las rachas se mantienen';
+                gamePhase.className = 'game-phase phase-finished';
+                // Show all cards at the end of the round
+                data.players.forEach(player => {
+                    const safePlayerId = player.id.replace(/[^a-zA-Z0-9-_]/g, '');
+                    const cardElement = document.querySelector(`#player-${safePlayerId} .card`);
+                    if (cardElement && player.hand.length > 0) {
+                        updateCard(cardElement, player.hand[0]);
+                    }
+                });
+                setTimeout(() => socket.emit('start_round', { room_id: roomId }), 3000);
+            });
+
+            socket.on('game_over', (data) => {
+                console.log('Game over:', data);
+                gamePhase.textContent = `Game Winner: ${data.winner_id}!`;
+                gamePhase.className = 'game-phase phase-finished';
+                gameControls.style.display = 'none';
+                endGameControls.style.display = 'block';
+            });
+
+            socket.on('error', (data) => {
+                console.error('Server error:', data.message);
+                alert(`Error: ${data.message}`);
+            });
+
+            // UI Logic
+            function updateUI(state) {
+                console.log('UpdateUI called with state:', state);
+                console.log('Current player ID:', currentPlayerId);
+                console.log('State current turn:', state.current_turn);
+                console.log('State phase:', state.phase);
+                console.log('State has_raise:', state.has_raise);
+                
+                // Update global game state for card visibility logic
+                window.gameState = state;
+                
+                // Update pots and table bet
+                potDisplay.textContent = `${state.pot || 0} fichas`;
+                finalPotDisplay.textContent = `${state.final_pot || 0} fichas`;
+                tableBetDisplay.textContent = `${state.table_bet || 100} fichas`;
+
+                // Update game phase
+                updateGamePhase(state.phase, state.is_tie, state.round_winner, state.game_winner);
+
+                // Render players
+                gameBoard.innerHTML = '';
+                state.players.forEach(player => {
+                    const playerDiv = createPlayerElement(player, state.current_turn, state.winner);
+                    gameBoard.appendChild(playerDiv);
+                });
+
+                // Show/hide controls
+                const isMyTurn = state.current_turn === currentPlayerId;
+                const isBettingPhase = state.phase === 'betting';
+                console.log('Is my turn:', isMyTurn);
+                console.log('Is betting phase:', isBettingPhase);
+                
+                gameControls.style.display = isMyTurn && isBettingPhase ? 'block' : 'none';
+                console.log('Game controls display:', gameControls.style.display);
+                
+                // Show appropriate control sets based on game state
+                if (isMyTurn && isBettingPhase) {
+                    const hasRaise = state.has_raise;
+                    console.log('Has raise:', hasRaise);
+                    firstRoundControls.style.display = !hasRaise ? 'block' : 'none';
+                    secondRoundControls.style.display = hasRaise ? 'block' : 'none';
+                    console.log('First round controls display:', firstRoundControls.style.display);
+                    console.log('Second round controls display:', secondRoundControls.style.display);
+                    
+                    if (hasRaise) {
+                        turnMessage.textContent = 'Alguien subió la apuesta. ¿Igualas o te retiras?';
+                    } else {
+                        turnMessage.textContent = '¿Subes la apuesta o pasas?';
+                    }
+                }
+                
+                const canStartGame = (state.phase === 'waiting' || state.phase === 'finished') && state.players.length >= 2;
+                startGameBtn.style.display = canStartGame ? 'inline-block' : 'none';
+
+                const canAddBots = (state.phase === 'waiting' || state.phase === 'finished') && state.players.length < 4;
+                addBotBtn.style.display = canAddBots ? 'inline-block' : 'none';
+
+                if(endGameControls) endGameControls.style.display = state.phase === 'finished' ? 'block' : 'none';
+
+            }
+
+            function updateGamePhase(phase, isTie, roundWinner, gameWinner) {
+                let phaseText = '';
+                let phaseClass = '';
+                
+                switch(phase) {
+                    case 'waiting':
+                         if (gameWinner) {
+                            phaseText = `🎉 GAME WINNER: ${gameWinner}! 🏆`;
+                            phaseClass = 'phase-finished';
+                        } else if (isTie) {
+                            phaseText = '🤝 Tie - Streaks reset. New round in 2s...';
+                            phaseClass = 'phase-waiting';
+                        } else if (roundWinner) {
+                            let winnerData = window.gameState && window.gameState.players ? window.gameState.players.find(p => p.name === roundWinner) : null;
+                            let consecutiveWins = winnerData ? winnerData.consecutive_wins : 0;
+                            let remaining = 3 - consecutiveWins;
+                            phaseText = `🏆 ${roundWinner} won the round (${consecutiveWins}/3). ${remaining} more to win.`;
+                            phaseClass = 'phase-waiting';
+                        } else {
+                            phaseText = '⏳ New round starting in 2 seconds...';
+                            phaseClass = 'phase-waiting';
+                        }
+                        break;
+                    case 'betting':
+                        phaseText = '🎯 Fase de Apuestas';
+                        phaseClass = 'phase-betting';
+                        break;
+                    case 'revealing':
+                        phaseText = '🃏 ¡Revelando cartas!';
+                        phaseClass = 'phase-revealing';
+                        break;
+                    case 'finished':
+                        phaseText = '🎉 Game Finished!';
+                        phaseClass = 'phase-finished';
+                        break;
+                }
+                
+                gamePhase.textContent = phaseText;
+                gamePhase.className = `game-phase ${phaseClass}`;
+            }
+
+            function createPlayerElement(player, currentTurnId, winnerId) {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'col-md-3';
+                const safePlayerId = player.id.replace(/[^a-zA-Z0-9-_]/g, '');
+                playerDiv.id = `player-${safePlayerId}`;
+
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'player-card';
+                if (player.id === currentPlayerId) cardDiv.classList.add('self');
+                if (player.id === currentTurnId) cardDiv.classList.add('active');
+                if (player.id === winnerId) cardDiv.classList.add('winner');
+                if (player.is_bot) cardDiv.classList.add('bot');
+
+                const playerName = document.createElement('h5');
+                playerName.textContent = `${player.is_bot ? '🤖' : '👤'} ${player.id.substring(0, 6)} (${player.chips} fichas)`;
+
+                const winStreak = document.createElement('span');
+                if (player.win_streak > 0) {
+                    winStreak.className = 'consecutive-wins';
+                    winStreak.textContent = `🔥 ${player.win_streak}/3`;
+                    playerName.appendChild(winStreak);
+                }
+
+                const cardElement = document.createElement('div');
+                cardElement.className = 'card';
+
+                if (player.hand.length > 0 && (player.id === currentPlayerId || (window.gameState && (window.gameState.phase === 'revealing' || window.gameState.phase === 'finished')))) {
+                    updateCard(cardElement, player.hand[0]);
+                } else {
+                    cardElement.classList.add('card-back');
+                    cardElement.innerHTML = '<span>?</span>';
+                }
+
+                if (player.folded) {
+                    cardDiv.style.opacity = 0.5;
+                    playerName.textContent += ' (Folded)';
+                }
+
+                cardDiv.appendChild(playerName);
+                cardDiv.appendChild(cardElement);
+                playerDiv.appendChild(cardDiv);
+
+                return playerDiv;
+            }
+
+            function updateCard(element, card) {
+                element.classList.remove('card-back');
+                const suitSymbol = getSuitSymbol(card.suit);
+                element.innerHTML = `<span>${card.rank}</span><span>${suitSymbol}</span>`;
+                if (['♥', '♦'].includes(suitSymbol)) {
+                    element.classList.add('red');
+                } else {
+                    element.classList.remove('red');
+                }
+            }
+
+            function getSuitSymbol(suit) {
+                const suits = { 'Hearts': '♥', 'Diamonds': '♦', 'Clubs': '♣', 'Spades': '♠' };
+                return suits[suit] || suit;
+            }
+
+            // Player Actions
+            if(startGameBtn) startGameBtn.addEventListener('click', () => socket.emit('start_game', { room_id: roomId }));
+            if(addBotBtn) addBotBtn.addEventListener('click', () => socket.emit('add_bot', { room_id: roomId }));
+            if(raiseBtn) raiseBtn.addEventListener('click', () => {
+                socket.emit('player_action', { room_id: roomId, action: 'raise' });
+            });
+            if(passBtn) passBtn.addEventListener('click', () => {
+                socket.emit('player_action', { room_id: roomId, action: 'pass' });
+            });
+            if(callBtn) callBtn.addEventListener('click', () => {
+                socket.emit('player_action', { room_id: roomId, action: 'call' });
+            });
+            if(foldBtn) foldBtn.addEventListener('click', () => {
+                socket.emit('player_action', { room_id: roomId, action: 'fold' });
+            });
+            if(playAgainBtn) playAgainBtn.addEventListener('click', () => socket.emit('start_game', { room_id: roomId }));
+            if(mainMenuBtn) mainMenuBtn.addEventListener('click', () => window.location.href = '/');
+        });
+    </script>
+</body>
+</html>
+
+
